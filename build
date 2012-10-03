@@ -1,0 +1,7 @@
+#!/bin/sh
+
+cpus=$(grep "^processor" /proc/cpuinfo | wc -l)
+
+export ARCH=arm
+export CROSS_COMPILE="/usr/local/arm-2009q3/bin/arm-none-eabi-"
+make -j${cpus} $@
