@@ -146,7 +146,7 @@ CONFIG_LGE_HALLIC_CARKIT=y
 #
 # Vibrator device driver Selection
 #
-# CONFIG_LGE_VIBRATOR is not set
+CONFIG_LGE_VIBRATOR=y
 CONFIG_ANDROID_VIBRATOR=y
 # CONFIG_LGE_ISA1200 is not set
 # CONFIG_VIB_USE_WORK_QUEUE is not set
