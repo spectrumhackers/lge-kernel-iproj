@@ -21,8 +21,10 @@
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include "linux/proc_fs.h"
+#include <linux/sysfs.h>
 
 #include <mach/hardware.h>
+#include <mach/msm_subsystem_map.h>
 #include <linux/io.h>
 #include <mach/board.h>
 
@@ -60,6 +62,7 @@ struct msmfb_writeback_data_list {
 	struct list_head registered_entry;
 	struct list_head active_entry;
 	void *addr;
+	struct ion_handle *ihdl;
 	struct file *pmem_file;
 	struct msmfb_data buf_info;
 	struct msmfb_img img;
@@ -79,6 +82,7 @@ struct msm_fb_data_type {
 	DISP_TARGET dest;
 	struct fb_info *fbi;
 
+	struct device *dev;
 	boolean op_enable;
 	uint32 fb_imgType;
 	boolean sw_currently_refreshing;
@@ -131,6 +135,7 @@ struct msm_fb_data_type {
 			      struct fb_cmap *cmap);
 	int (*do_histogram) (struct fb_info *info,
 			      struct mdp_histogram_data *hist);
+	void (*vsync_ctrl) (int enable);
 	void *cursor_buf;
 	void *cursor_buf_phys;
 
@@ -145,6 +150,7 @@ struct msm_fb_data_type {
 	__u32 var_xres;
 	__u32 var_yres;
 	__u32 var_pixclock;
+	__u32 var_frame_rate;
 
 #ifdef MSM_FB_ENABLE_DBGFS
 	struct dentry *sub_dir;
@@ -171,15 +177,18 @@ struct msm_fb_data_type {
 	struct list_head writeback_register_queue;
 	wait_queue_head_t wait_q;
 	struct ion_client *iclient;
+	struct msm_mapped_buffer *map_buffer;
 	struct mdp_buf_type *ov0_wb_buf;
 	struct mdp_buf_type *ov1_wb_buf;
 	u32 ov_start;
 	u32 mem_hid;
 	u32 mdp_rev;
-	u32 use_ov0_blt, ov0_blt_state;
-	u32 use_ov1_blt, ov1_blt_state;
 	u32 writeback_state;
+	bool writeback_active_cnt;
 	int cont_splash_done;
+#ifdef CONFIG_FB_MSM_VSYNC_SYSFS
+	ktime_t vsync_time;
+#endif
 };
 
 struct dentry *msm_fb_get_debugfs_root(void);
@@ -198,6 +207,7 @@ int msm_fb_writeback_dequeue_buffer(struct fb_info *info,
 int msm_fb_writeback_stop(struct fb_info *info);
 int msm_fb_writeback_terminate(struct fb_info *info);
 int msm_fb_detect_client(const char *name);
+int calc_fb_offset(struct msm_fb_data_type *mfd, struct fb_info *fbi, int bpp);
 
 #ifdef CONFIG_FB_BACKLIGHT
 void msm_fb_config_backlight(struct msm_fb_data_type *mfd);
@@ -205,5 +215,18 @@ void msm_fb_config_backlight(struct msm_fb_data_type *mfd);
 
 void fill_black_screen(void);
 void unfill_black_screen(void);
+int msm_fb_check_frame_rate(struct msm_fb_data_type *mfd,
+				struct fb_info *info);
 
+#ifdef CONFIG_FB_MSM_LOGO
+#ifdef CONFIG_LGE_I_DISP_BOOTLOGO
+#define INIT_IMAGE_FILE "/bootimages/boot_logo_00000.rle"
+#else
+#define INIT_IMAGE_FILE "/initlogo.rle"
+#endif
+int load_565rle_image(char *filename, bool bf_supported);
+#endif
+#ifdef CONFIG_FB_MSM_VSYNC_SYSFS
+int msm_fb_notify_vsync(struct msm_fb_data_type *mfd, ktime_t vsync_time);
+#endif
 #endif /* MSM_FB_H */

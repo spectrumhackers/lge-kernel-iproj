@@ -28,21 +28,15 @@
 #include "board-8960.h"
 
 #ifdef CONFIG_FB_MSM_TRIPLE_BUFFER
-#define MSM_FB_PRIM_BUF_SIZE (1920 * 1200 * 4 * 3) /* 4 bpp x 3 pages */
+#define MSM_FB_PRIM_BUF_SIZE \
+		(roundup((1920 * 1200 * 4), 4096) * 3) /* 4 bpp x 3 pages */
 #else
-#define MSM_FB_PRIM_BUF_SIZE (1920 * 1200 * 4 * 2) /* 4 bpp x 2 pages */
-#endif
-
-#ifdef CONFIG_FB_MSM_HDMI_MSM_PANEL
-#define MSM_FB_EXT_BUF_SIZE	(1920 * 1088 * 2 * 1) /* 2 bpp x 1 page */
-#elif defined(CONFIG_FB_MSM_TVOUT)
-#define MSM_FB_EXT_BUF_SIZE (720 * 576 * 2 * 2) /* 2 bpp x 2 pages */
-#else
-#define MSM_FB_EXT_BUF_SIZE	0
+#define MSM_FB_PRIM_BUF_SIZE \
+		(roundup((1920 * 1200 * 4), 4096) * 2) /* 4 bpp x 2 pages */
 #endif
 
 /* Note: must be multiple of 4096 */
-#define MSM_FB_SIZE roundup(MSM_FB_PRIM_BUF_SIZE + MSM_FB_EXT_BUF_SIZE, 4096)
+#define MSM_FB_SIZE roundup(MSM_FB_PRIM_BUF_SIZE, 4096)
 
 #ifdef CONFIG_FB_MSM_OVERLAY0_WRITEBACK
 #define MSM_FB_OVERLAY0_WRITEBACK_SIZE roundup((1920 * 1200 * 3 * 2), 4096)
@@ -65,6 +59,8 @@
 #define MIPI_VIDEO_CHIMEI_WXGA_PANEL_NAME	"mipi_video_chimei_wxga"
 #define MIPI_VIDEO_SIMULATOR_VGA_PANEL_NAME	"mipi_video_simulator_vga"
 #define MIPI_CMD_RENESAS_FWVGA_PANEL_NAME	"mipi_cmd_renesas_fwvga"
+#define MIPI_VIDEO_ORISE_720P_PANEL_NAME	"mipi_video_orise_720p"
+#define MIPI_CMD_ORISE_720P_PANEL_NAME		"mipi_cmd_orise_720p"
 #define HDMI_PANEL_NAME	"hdmi_msm"
 #define TVOUT_PANEL_NAME	"tvout_msm"
 
@@ -124,6 +120,16 @@ static int msm_fb_detect_panel(const char *name)
 			set_mdp_clocks_for_wuxga();
 			return 0;
 		}
+
+		if (!strncmp(name, MIPI_VIDEO_ORISE_720P_PANEL_NAME,
+				strnlen(MIPI_VIDEO_ORISE_720P_PANEL_NAME,
+					PANEL_NAME_MAX_LEN)))
+			return 0;
+
+		if (!strncmp(name, MIPI_CMD_ORISE_720P_PANEL_NAME,
+				strnlen(MIPI_CMD_ORISE_720P_PANEL_NAME,
+					PANEL_NAME_MAX_LEN)))
+			return 0;
 #endif
 	}
 
@@ -439,6 +445,7 @@ static int mipi_dsi_cdp_panel_power(int on)
 	return 0;
 }
 
+static char mipi_dsi_splash_is_enabled(void);
 static int mipi_dsi_panel_power(int on)
 {
 	int ret;
@@ -456,6 +463,7 @@ static int mipi_dsi_panel_power(int on)
 static struct mipi_dsi_platform_data mipi_dsi_pdata = {
 	.vsync_gpio = MDP_VSYNC_GPIO,
 	.dsi_power_save = mipi_dsi_panel_power,
+	.splash_is_enabled = mipi_dsi_splash_is_enabled,
 };
 
 #ifdef CONFIG_MSM_BUS_SCALING
@@ -654,24 +662,15 @@ static struct msm_bus_scale_pdata mdp_bus_scale_pdata = {
 
 #endif
 
-static int mdp_core_clk_rate_table[] = {
-	85330000,
-	128000000,
-	160000000,
-	200000000,
-};
-
 static struct msm_panel_common_pdata mdp_pdata = {
 	.gpio = MDP_VSYNC_GPIO,
-	.mdp_core_clk_rate = 85330000,
-	.mdp_core_clk_table = mdp_core_clk_rate_table,
-	.num_mdp_clk = ARRAY_SIZE(mdp_core_clk_rate_table),
+	.mdp_max_clk = 200000000,
 #ifdef CONFIG_MSM_BUS_SCALING
 	.mdp_bus_scale_table = &mdp_bus_scale_pdata,
 #endif
 	.mdp_rev = MDP_REV_42,
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
-	.mem_hid = ION_CP_MM_HEAP_ID,
+	.mem_hid = BIT(ION_CP_MM_HEAP_ID),
 #else
 	.mem_hid = MEMTYPE_EBI1,
 #endif
@@ -714,6 +713,11 @@ void __init msm8960_mdp_writeback(struct memtype_reserve* reserve_table)
 	reserve_table[mdp_pdata.mem_hid].size +=
 		mdp_pdata.ov1_wb_size;
 #endif
+}
+
+static char mipi_dsi_splash_is_enabled(void)
+{
+	return mdp_pdata.cont_splash_enabled;
 }
 
 static struct platform_device mipi_dsi_renesas_panel_device = {
@@ -785,6 +789,11 @@ static struct platform_device mipi_dsi2lvds_bridge_device = {
 	.name = "mipi_tc358764",
 	.id = 0,
 	.dev.platform_data = &mipi_dsi2lvds_pdata,
+};
+
+static struct platform_device mipi_dsi_orise_panel_device = {
+	.name = "mipi_orise",
+	.id = 0,
 };
 
 #ifdef CONFIG_FB_MSM_HDMI_MSM_PANEL
@@ -1075,6 +1084,7 @@ void __init msm8960_init_fb(void)
 
 	if (!machine_is_msm8960_sim() && !machine_is_msm8960_rumi3()) {
 		platform_device_register(&mipi_dsi_novatek_panel_device);
+		platform_device_register(&mipi_dsi_orise_panel_device);
 
 #ifdef CONFIG_FB_MSM_HDMI_MSM_PANEL
 		platform_device_register(&hdmi_msm_device);
@@ -1110,13 +1120,43 @@ void __init msm8960_allocate_fb_region(void)
 			size, addr, __pa(addr));
 }
 
+/**
+ * Set MDP clocks to high frequency to avoid DSI underflow
+ * when using high resolution 1200x1920 WUXGA panels
+ */
+static void set_mdp_clocks_for_wuxga(void)
+{
+	mdp_ui_vectors[0].ab = 2000000000;
+	mdp_ui_vectors[0].ib = 2000000000;
+	mdp_vga_vectors[0].ab = 2000000000;
+	mdp_vga_vectors[0].ib = 2000000000;
+	mdp_720p_vectors[0].ab = 2000000000;
+	mdp_720p_vectors[0].ib = 2000000000;
+	mdp_1080p_vectors[0].ab = 2000000000;
+	mdp_1080p_vectors[0].ib = 2000000000;
+
+	if (hdmi_is_primary) {
+		dtv_bus_def_vectors[0].ab = 2000000000;
+		dtv_bus_def_vectors[0].ib = 2000000000;
+	}
+}
+
 void __init msm8960_set_display_params(char *prim_panel, char *ext_panel)
 {
+	int disable_splash = 0;
 	if (strnlen(prim_panel, PANEL_NAME_MAX_LEN)) {
 		strlcpy(msm_fb_pdata.prim_panel_name, prim_panel,
 			PANEL_NAME_MAX_LEN);
 		pr_debug("msm_fb_pdata.prim_panel_name %s\n",
 			msm_fb_pdata.prim_panel_name);
+
+		if (strncmp((char *)msm_fb_pdata.prim_panel_name,
+			MIPI_VIDEO_TOSHIBA_WSVGA_PANEL_NAME,
+			strnlen(MIPI_VIDEO_TOSHIBA_WSVGA_PANEL_NAME,
+				PANEL_NAME_MAX_LEN))) {
+			/* Disable splash for panels other than Toshiba WSVGA */
+			disable_splash = 1;
+		}
 
 		if (!strncmp((char *)msm_fb_pdata.prim_panel_name,
 			HDMI_PANEL_NAME, strnlen(HDMI_PANEL_NAME,
@@ -1132,4 +1172,7 @@ void __init msm8960_set_display_params(char *prim_panel, char *ext_panel)
 		pr_debug("msm_fb_pdata.ext_panel_name %s\n",
 			msm_fb_pdata.ext_panel_name);
 	}
+
+	if (disable_splash)
+		mdp_pdata.cont_splash_enabled = 0;
 }
