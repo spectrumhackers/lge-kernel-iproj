@@ -69,7 +69,6 @@ keycode_trans_type keytrans_table[KEY_TRANS_MAP_SIZE]={
 /* index = 29 */{0xB3, V_KEY_OK_DELETE}, 
 /* index = 30 */{0x09, V_KEY_DIAL},
 /* index = 31 */{0x0A, V_KEY_EDITBOX},
-/* index = 32 */{0xB5, KEY_VIDEO_CALL},
 };
 
 unsigned int LGF_KeycodeTrans(word input)

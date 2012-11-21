@@ -95,7 +95,7 @@ DECLARE_DELAYED_WORK(sleep_workqueue, bluesleep_sleep_work);
 #define BT_TXDATA	0x02
 #define BT_ASLEEP	0x04
 #ifndef CONFIG_LGE_BRCM_H4_LPM_SUPPORT_PATCH
-//#define CONFIG_LGE_BRCM_H4_LPM_SUPPORT_PATCH
+#define CONFIG_LGE_BRCM_H4_LPM_SUPPORT_PATCH
 #endif
 
 /* global pointer to a single hci device. */
@@ -181,11 +181,6 @@ void bluesleep_sleep_wakeup(void)
 		/* Just start the timer if not asleep */
 		mod_timer(&tx_timer, jiffies + (TX_TIMER_INTERVAL * HZ));
 	}
-#else
-        else if(gpio_get_value(bsi->ext_wake)) {
-		gpio_set_value(bsi->ext_wake, 0);
-		mod_timer(&tx_timer, jiffies + (TX_TIMER_INTERVAL * HZ));
-        }
 #endif
 }
 

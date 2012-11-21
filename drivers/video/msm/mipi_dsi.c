@@ -95,7 +95,7 @@ static int mipi_dsi_off(struct platform_device *pdev)
 		/* video mode, wait until fifo cleaned */
 		mipi_dsi_controller_cfg(0);
 	}
-
+	
 	/*
 	 * Desctiption: change to DSI_CMD_MODE since it needed to
 	 * tx DCS dsiplay off comamnd to panel

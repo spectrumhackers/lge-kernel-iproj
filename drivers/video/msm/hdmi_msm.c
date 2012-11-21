@@ -4182,6 +4182,7 @@ static int hdmi_msm_power_on(struct platform_device *pdev)
 	if (!hdmi_msm_state || !hdmi_msm_state->hdmi_app_clk || !MSM_HDMI_BASE)
 		return -ENODEV;
 
+
 	DEV_INFO("power: ON (%dx%d %d)\n", mfd->var_xres, mfd->var_yres,
 		mfd->var_pixclock);
 
@@ -4235,6 +4236,7 @@ static int hdmi_msm_power_off(struct platform_device *pdev)
 
 	if (!hdmi_msm_state->hdmi_app_clk)
 		return -ENODEV;
+
 
 #ifdef CONFIG_FB_MSM_HDMI_MSM_PANEL_HDCP_SUPPORT
 	mutex_lock(&hdmi_msm_state_mutex);
@@ -4570,7 +4572,7 @@ static int __init hdmi_msm_init(void)
 #ifdef CONFIG_LGE_MHL_SII9244	
 	external_common_state->video_resolution = HDMI_VFRMT_1920x1080p30_16_9;
 #else
-	external_common_state->video_resolution = HDMI_VFRMT_1920x1080p60_16_9;
+	external_common_state->video_resolution = HDMI_VFRMT_1920x1080p60_16_9; 
 #endif
 
 #ifdef CONFIG_FB_MSM_HDMI_3D

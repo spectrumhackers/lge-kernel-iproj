@@ -724,7 +724,7 @@ int msm_camio_sensor_clk_on(struct platform_device *pdev)
       return rc;
     } else {
       printk("[CAMERA]: %s[clk should be enable]: \n", __func__);
-	return msm_camio_clk_enable(CAMIO_CAM_MCLK_CLK);
+      return msm_camio_clk_enable(CAMIO_CAM_MCLK_CLK);
     }
 // LGE_DOM_UPDATE_S john.park 2011/1/06 }      
 //     return msm_camio_clk_enable(CAMIO_CAM_MCLK_CLK);
@@ -741,7 +741,7 @@ int msm_camio_sensor_clk_off(struct platform_device *pdev)
       return 0;
     } else {
       printk("[CAMERA]: %s[clk should be disable]: \n", __func__);
-	return msm_camio_clk_disable(CAMIO_CAM_MCLK_CLK);
+      return msm_camio_clk_disable(CAMIO_CAM_MCLK_CLK);
     }	
 
 }

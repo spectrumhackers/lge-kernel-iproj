@@ -503,18 +503,6 @@ static void genlock_release_lock(struct genlock_handle *handle)
 	if (handle == NULL || handle->lock == NULL)
 		return;
 
-/* for preventing kernel crash triggred by driver */
-#ifdef CONFIG_LGE_DEBUG
-    if((handle->lock->state != _UNLOCKED)&&(handle->lock->state != _RDLOCK)&&(handle->lock->state != _WRLOCK))
-    {
-        printk(KERN_INFO "================================");
-        printk(KERN_INFO "   lock state %d \n", handle->lock->state);
-        GENLOCK_LOG_ERR("lock status is invalid Please Check your driver or apps \n");
-        printk(KERN_INFO "================================");
-        return;
-    }
-#endif
-
 	spin_lock_irqsave(&handle->lock->lock, flags);
 
 	/* If the handle is holding the lock, then force it closed */

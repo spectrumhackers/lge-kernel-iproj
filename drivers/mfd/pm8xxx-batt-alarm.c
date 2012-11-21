@@ -917,7 +917,7 @@ static int pm8xxx_batt_alarm_resume(struct device *dev)
     else
         pm8xxx_batt_alarm_enable(PM8XXX_BATT_ALARM_LOWER_COMPARATOR);
 
-	return 0;
+    return 0;
 }
 
 static struct dev_pm_ops pm8xxx_batt_alarm_pm_ops = {

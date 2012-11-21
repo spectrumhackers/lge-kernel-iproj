@@ -1026,10 +1026,10 @@ inline void diag_sdio_fn(int type) {}
 #ifdef CONFIG_DIAG_HSIC_PIPE
 void diag_hsic_fn(int type)
 {
-	if (type == INIT)
-		diagfwd_hsic_init();
-	else if (type == EXIT)
-		diagfwd_hsic_exit();
+        if (type == INIT)
+                diagfwd_hsic_init();
+        else if (type == EXIT)
+                diagfwd_hsic_exit();
 }
 #else
 inline void diag_hsic_fn(int type) {}

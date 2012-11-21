@@ -71,7 +71,7 @@ static int bluetooth_power_rfkill_probe(struct platform_device *pdev)
 	/* force Bluetooth off during init to allow for user control */
 	rfkill_init_sw_state(rfkill, 1);
 #if !defined (CONFIG_MACH_LGE_I_BOARD)	
-	previous = 1;
+		previous = 1;
 #endif
 
 	ret = rfkill_register(rfkill);
@@ -109,7 +109,7 @@ static int __devinit bt_power_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "platform data not initialized\n");
 		return -ENOSYS;
 	}
-
+	
 #if defined (CONFIG_MACH_LGE_I_BOARD)	
 		bt_platform_data = (struct bluetooth_platform_data *)pdev->dev.platform_data;
 #endif

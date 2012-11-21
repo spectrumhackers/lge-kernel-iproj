@@ -159,7 +159,6 @@ static void cpu_power_off(void *data)
 		 * shut msm down
 		 */
 		__msm_power_off(0);
-
 		pet_watchdog();
 		pr_err("Calling scm to disable arbiter\n");
 		/* call secure manager to disable arbiter and never return */

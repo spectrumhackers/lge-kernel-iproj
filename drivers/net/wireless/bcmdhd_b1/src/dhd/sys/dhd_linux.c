@@ -149,9 +149,6 @@ DECLARE_WAIT_QUEUE_HEAD(dhd_dpc_wait);
 #if defined(OOB_INTR_ONLY)
 extern void dhd_enable_oob_intr(struct dhd_bus *bus, bool enable);
 #endif /* defined(OOB_INTR_ONLY) */
-
-static void dhd_hang_process(struct work_struct *work);
-
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0))
 MODULE_LICENSE("GPL v2");
 #endif /* LinuxVer */
@@ -275,7 +272,6 @@ typedef struct dhd_info {
 	bool dhd_tasklet_create;
 #endif /* DHDTHREAD */
 	tsk_ctl_t	thr_sysioc_ctl;
-	struct work_struct work_hang;
 
 	/* Wakelocks */
 #if defined(CONFIG_HAS_WAKELOCK) && (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27))
@@ -1817,7 +1813,7 @@ dhd_dpc_thread(void *data)
 
 	/*  signal: thread has started */
 	complete(&tsk->completed);
-#ifdef CONFIG_MACH_LGE_I_BOARD
+#ifdef CONFIG_PRODUCT_I_ATNT
 	{
 		struct cpumask cpus;
 		DHD_ERROR(("%s: Enter  Set CPU Affinity only to cpu0\n", __func__));
@@ -2504,7 +2500,7 @@ exit:
 #endif
 // LGE_CHANGE_E, freddy.jang, 20111213, for ATCMD & Hidden Menu
 
-#ifdef CONFIG_MACH_LGE_I_BOARD_ATNT
+#ifdef CONFIG_PRODUCT_I_ATNT
 #include "../../../../../../../lge/include/lg_power_common.h"
 extern int pm_chg_vbatt_fet_on(int value);
 extern acc_cable_type get_ext_cable_type_value(void);
@@ -2535,7 +2531,7 @@ dhd_open(struct net_device *net)
 	//save_firmware_path();
 	// LGE_CHANGE_E, freddy.jang, 20111213, for ATCMD & Hidden Menu
 
-#ifdef CONFIG_MACH_LGE_I_BOARD_ATNT
+#ifdef CONFIG_PRODUCT_I_ATNT
 	// bill.jung@lge.com - ATNT AT Command Issue. WiFi driver must turn on chip's power only when At command mode.
 	if( get_ext_cable_type_value() == LT_CABLE_56K || get_ext_cable_type_value() == LT_CABLE_130K  )
 	{
@@ -2945,8 +2941,6 @@ dhd_attach(osl_t *osh, struct dhd_bus *bus, uint bus_hdrlen)
 		dhd->thr_sysioc_ctl.thr_pid = -1;
 	}
 	dhd_state |= DHD_ATTACH_STATE_THREADS_CREATED;
-
-	INIT_WORK(&dhd->work_hang, dhd_hang_process);
 
 	/*
 	 * Save the dhd_info into the priv
@@ -3832,13 +3826,12 @@ dhd_preinit_ioctls(dhd_pub_t *dhd)
 
 #ifdef PKT_FILTER_SUPPORT
 	/* Setup defintions for pktfilter , enable in suspend */
-	dhd->pktfilter_count = 5;
+	dhd->pktfilter_count = 4;
 	/* Setup filter to allow only unicast */
 	dhd->pktfilter[0] = "100 0 0 0 0x01 0x00";
 	dhd->pktfilter[1] = NULL;
 	dhd->pktfilter[2] = NULL;
 	dhd->pktfilter[3] = NULL;
-	dhd->pktfilter[4] = "104 0 0 0 0xFFFFFFFFFFFF 0x01005E0000FB";
 #if defined(SOFTAP)
 	if (ap_fw_loaded) {
 		int i;
@@ -4238,7 +4231,6 @@ void dhd_detach(dhd_pub_t *dhdp)
 	}
 #endif /* defined(CONFIG_HAS_EARLYSUSPEND) */
 
-	cancel_work_sync(&dhd->work_hang);
 
 #if defined(CONFIG_WIRELESS_EXT)
 	if (dhd->dhd_state & DHD_ATTACH_STATE_WL_ATTACH) {
@@ -4386,7 +4378,7 @@ dhd_module_init(void)
 {
 	int error = 0;
 
-#if 0 && (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27))
+#if 1 && (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27))
 	int retry = POWERUP_MAX_RETRY;
 	int chip_up = 0;
 #endif 
@@ -4411,7 +4403,7 @@ dhd_module_init(void)
 	} while (0);
 #endif 
 
-#if 0 && defined(BCMLXSDMMC) && (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27))
+#if 1 && defined(BCMLXSDMMC) && (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27))
 	do {
 		sema_init(&dhd_chipup_sem, 0);
 		dhd_bus_reg_sdio_notify(&dhd_chipup_sem);
@@ -4461,10 +4453,6 @@ dhd_module_init(void)
 		DHD_ERROR(("%s: sdio_register_driver failed\n", __FUNCTION__));
 		goto fail_1;
 	}
-
-#if defined(CONFIG_LGE_BCM432X_PATCH)
-        dhd_customer_gpio_wlan_ctrl(WLAN_RESET_ON);
-#endif
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27))
 	/*
@@ -5034,8 +5022,7 @@ int net_os_rxfilter_add_remove(struct net_device *dev, int add_remove, int num)
 	char *filterp = NULL;
 	int ret = 0;
 
-	if (!dhd || (num == DHD_UNICAST_FILTER_NUM) ||
-	    (num == DHD_MDNS_FILTER_NUM))
+	if (!dhd || (num == DHD_UNICAST_FILTER_NUM))
 		return ret;
 	if (num >= dhd->pub.pktfilter_count)
 		return -EINVAL;
@@ -5128,27 +5115,6 @@ dhd_dev_get_pno_status(struct net_device *dev)
 
 #endif /* PNO_SUPPORT */
 
-static void dhd_hang_process(struct work_struct *work)
-{
-	dhd_info_t *dhd;
-	struct net_device *dev;
-
-	dhd = (dhd_info_t *)container_of(work, dhd_info_t, work_hang);
-	dev = dhd->iflist[0]->net;
-
-	if (dev) {
-#if defined(CONFIG_WIRELESS_EXT)
-		wl_iw_send_priv_event(dev, "HANG");
-#endif
-#if defined(WL_CFG80211)
-		wl_cfg80211_hang(dev, WLAN_REASON_UNSPECIFIED);
-		dev_close(dev);
-		dev_open(dev);
-#endif
-	}
-}
-
-
 int net_os_send_hang_message(struct net_device *dev)
 {
 	dhd_info_t *dhd = *(dhd_info_t **)netdev_priv(dev);
@@ -5157,7 +5123,14 @@ int net_os_send_hang_message(struct net_device *dev)
 	if (dhd) {
 		if (!dhd->pub.hang_was_sent) {
 			dhd->pub.hang_was_sent = 1;
-			schedule_work(&dhd->work_hang);
+#if defined(CONFIG_WIRELESS_EXT)
+			ret = wl_iw_send_priv_event(dev, "HANG");
+#endif
+#if defined(WL_CFG80211)
+			ret = wl_cfg80211_hang(dev, WLAN_REASON_UNSPECIFIED);
+			dev_close(dev);
+			dev_open(dev);
+#endif
 		}
 	}
 	return ret;

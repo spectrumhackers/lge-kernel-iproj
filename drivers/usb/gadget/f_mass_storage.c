@@ -3554,6 +3554,7 @@ static struct usb_gadget_strings *fsg_strings_array[] = {
 	NULL,
 };
 
+
 static int fsg_bind_config(struct usb_composite_dev *cdev,
 			   struct usb_configuration *c,
 			   struct fsg_common *common)

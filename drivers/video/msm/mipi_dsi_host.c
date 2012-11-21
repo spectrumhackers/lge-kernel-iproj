@@ -821,6 +821,7 @@ void mipi_dsi_host_init(struct mipi_panel_info *pinfo)
 		if (pinfo->r_sel)
 			data |= BIT(0);
 		MIPI_OUTP(MIPI_DSI_BASE + 0x001c, data);
+		
 	} else if (pinfo->mode == DSI_CMD_MODE) {
 		data = 0;
 		data |= ((pinfo->interleave_max & 0x0f) << 20);
@@ -1342,7 +1343,7 @@ int mipi_dsi_cmd_dma_tx(struct dsi_buf *tp)
 	wmb();
 	MIPI_OUTP(MIPI_DSI_BASE + 0x08c, 0x01);	/* trigger */
 	wmb();
-
+	
 	// to avoid hang dsi completion timeout - 1s timeout
 	//wait_for_completion(&dsi_dma_comp);
 	if(!wait_for_completion_timeout(&dsi_dma_comp, msecs_to_jiffies(VSYNC_PERIOD*20))) { // 320ms

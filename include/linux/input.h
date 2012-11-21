@@ -438,8 +438,6 @@ struct input_keymap_entry {
 #define KEY_WIMAX		246
 #define KEY_RFKILL		247	/* Key that controls all radios */
 
-#define KEY_VIDEO_CALL		254	/* Key For Vedio CAll*/
-
 #define KEY_PWR_OFF_CHG_REBOOT		500  /* [LGE_UPDATE - PowerOff CHG] */
 
 /* Code 255 is reserved for special needs of AT keyboard driver */
@@ -1480,11 +1478,7 @@ int input_flush_device(struct input_handle *handle, struct file *file);
 void input_event(struct input_dev *dev, unsigned int type, unsigned int code, int value);
 void input_inject_event(struct input_handle *handle, unsigned int type, unsigned int code, int value);
 
-#ifdef CONFIG_LGE_DIAGTEST
 extern int LGF_TestModeGetDisableInputDevices(void);
-#else
-static inline int LGF_TestModeGetDisableInputDevices(void) { return 0; }
-#endif
 
 static inline void input_report_key(struct input_dev *dev, unsigned int code, int value)
 {
@@ -1504,7 +1498,7 @@ static inline void input_report_abs(struct input_dev *dev, unsigned int code, in
 	if(LGF_TestModeGetDisableInputDevices())
 		;
 	else
-	input_event(dev, EV_ABS, code, value);
+		input_event(dev, EV_ABS, code, value);
 }
 
 static inline void input_report_ff_status(struct input_dev *dev, unsigned int code, int value)
@@ -1522,7 +1516,7 @@ static inline void input_sync(struct input_dev *dev)
 	if(LGF_TestModeGetDisableInputDevices())
 		;
 	else
-	input_event(dev, EV_SYN, SYN_REPORT, 0);
+		input_event(dev, EV_SYN, SYN_REPORT, 0);
 }
 
 static inline void input_mt_sync(struct input_dev *dev)
@@ -1530,7 +1524,7 @@ static inline void input_mt_sync(struct input_dev *dev)
 	if(LGF_TestModeGetDisableInputDevices())
 		;
 	else
-	input_event(dev, EV_SYN, SYN_MT_REPORT, 0);
+		input_event(dev, EV_SYN, SYN_MT_REPORT, 0);
 }
 
 void input_set_capability(struct input_dev *dev, unsigned int type, unsigned int code);

@@ -1169,7 +1169,7 @@ static int msm_rotator_start(unsigned long arg,
 	int first_free_index = INVALID_SESSION;
 	unsigned int dst_w, dst_h;
        int need_resend=0; // QCT CN00817097 color inversion patch
-
+	   
 	if (copy_from_user(&info, (void __user *)arg, sizeof(info)))
 		return -EFAULT;
 
@@ -1415,7 +1415,7 @@ msm_rotator_close(struct inode *inode, struct file *filp)
 	// pid = (int)filp->private_data;
 	fd_info = (struct msm_rotator_fd_info *)filp->private_data;
 
-	mutex_lock(&msm_rotator_dev->rotator_lock);
+ 	mutex_lock(&msm_rotator_dev->rotator_lock);
 	if (--fd_info->ref_cnt > 0) {
 		mutex_unlock(&msm_rotator_dev->rotator_lock);
 		return 0;

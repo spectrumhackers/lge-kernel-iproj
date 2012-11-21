@@ -109,7 +109,8 @@ static struct device *cfg80211_parent_dev = NULL;
 static int vsdb_supported = 0;
 struct wl_priv *wlcfg_drv_priv = NULL;
 
-u32 wl_dbg_level = WL_DBG_ERR | WL_DBG_DBG;
+u32 wl_dbg_level = WL_DBG_ERR;
+//u32 wl_dbg_level = WL_DBG_LEVEL;
 
 #if defined(CONFIG_LGE_BCM432X_PATCH) && defined(P2P_PATCH)
 extern uint dhd_init_ap_val;
@@ -2598,8 +2599,6 @@ wl_cfg80211_connect(struct wiphy *wiphy, struct net_device *dev,
 			WL_DBG(("ASSOC2 p2p index : %d sme->ie_len %d\n",
 				wl_cfgp2p_find_idx(wl, dev), sme->ie_len));
 			wl_cfgp2p_set_management_ie(wl, dev, wl_cfgp2p_find_idx(wl, dev),
-				VNDR_IE_PRBREQ_FLAG, sme->ie, sme->ie_len);
-			wl_cfgp2p_set_management_ie(wl, dev, wl_cfgp2p_find_idx(wl, dev),
 				VNDR_IE_ASSOCREQ_FLAG, sme->ie, sme->ie_len);
 		}
 
@@ -3280,10 +3279,10 @@ wl_cfg80211_get_station(struct wiphy *wiphy, struct net_device *dev,
 #endif
 	} else if (wl_get_mode_by_netdev(wl, dev) == WL_MODE_BSS) {
 		u8 *curmacp = wl_read_prof(wl, dev, WL_PROF_BSSID);
-		err = -ENODEV;
 		if (!wl_get_drv_status(wl, CONNECTED, dev) ||
-			(dhd_is_associated(dhd, NULL, &err) == FALSE)) {
-			WL_ERR(("NOT assoc: %d\n", err));
+			(dhd_is_associated(dhd, NULL) == FALSE)) {
+			WL_ERR(("NOT assoc\n"));
+			err = -ENODEV;
 			goto get_station_err;
 		}
 		if (memcmp(mac, curmacp, ETHER_ADDR_LEN)) {
@@ -3313,12 +3312,17 @@ wl_cfg80211_get_station(struct wiphy *wiphy, struct net_device *dev,
 		rssi = dtoh32(scb_val.val);
 		sinfo->filled |= STATION_INFO_SIGNAL;
 		sinfo->signal = rssi;
+#ifdef CONFIG_PRODUCT_I_VZW		
+		//WL_DBG(("RSSI %d dBm\n", rssi)); // disabled by request of model team
+#else
 		WL_DBG(("RSSI %d dBm\n", rssi));
+#endif
+
 
 get_station_err:
-		if (err && (err != -ETIMEDOUT) && (err != -EIO)) {
+		if (err) {
 			/* Disconnect due to zero BSSID or error to get RSSI */
-			WL_ERR(("force cfg80211_disconnected %d\n", err));
+			WL_ERR(("force cfg80211_disconnected\n"));
 			wl_clr_drv_status(wl, CONNECTED, dev);
 			cfg80211_disconnected(dev, 0, NULL, 0, GFP_KERNEL);
 			wl_link_down(wl);
@@ -3839,9 +3843,7 @@ wl_cfg80211_mgmt_tx(struct wiphy *wiphy, struct net_device *ndev,
 	wifi_p2p_pub_act_frame_t *act_frm = NULL;
 	wifi_p2p_action_frame_t *p2p_act_frm = NULL;
 	wifi_p2psd_gas_pub_act_frame_t *sd_act_frm = NULL;
-#if WL_DBG_LEVEL
 	s8 eabuf[ETHER_ADDR_STR_LEN];
-#endif
 
 	WL_DBG(("Enter \n"));
 
@@ -4677,6 +4679,25 @@ wl_cfg80211_add_set_beacon(struct wiphy *wiphy, struct net_device *dev,
 					return err;
 				}
 			}
+#if defined(CONFIG_LGE_BCM432X_PATCH)
+			WL_ERR(("wl_cfg80211_add_set_beacon closednet %d\n", info->hidden_ssid));
+			if (info->hidden_ssid == NL80211_HIDDEN_SSID_NOT_IN_USE)
+			{
+				err = wldev_iovar_setint(dev, "closednet", 0);
+				if (unlikely(err))
+				{
+					WL_ERR(("closednet command fail:val[0]:err[%d]\n", err));
+				}
+			}
+			else
+			{
+				err = wldev_iovar_setint(dev, "closednet", 1);
+				if (unlikely(err))
+				{
+					WL_ERR(("closednet command fail:val[1]:err[%d]\n", err));
+				}
+			}
+#endif
 			err = wldev_ioctl(dev, WLC_UP, &ap, sizeof(s32), true);
 			if (unlikely(err)) {
 				WL_ERR(("WLC_UP error (%d)\n", err));
@@ -4693,6 +4714,7 @@ wl_cfg80211_add_set_beacon(struct wiphy *wiphy, struct net_device *dev,
 				wl_clr_drv_status(wl, AP_CREATING, dev);
 				wl_set_drv_status(wl, AP_CREATED, dev);
 			}
+			
 		}
 	} else if (wl_get_drv_status(wl, AP_CREATED, dev)) {
 		ap = 1;
@@ -6196,11 +6218,23 @@ wl_cfg80211_netdev_notifier_call(struct notifier_block * nb,
 	struct net_device *dev = ndev;
 	struct wireless_dev *wdev = dev->ieee80211_ptr;
 	struct wl_priv *wl = wlcfg_drv_priv;
+	int refcnt = 0;
 
 	WL_DBG(("Enter \n"));
 	if (!wdev || !wl || dev == wl_to_prmry_ndev(wl))
 		return NOTIFY_DONE;
 	switch (state) {
+		case NETDEV_DOWN:
+			while(work_pending(&wdev->cleanup_work)) {
+				WL_ERR(("%s : [NETDEV_DOWN] work_pending (%d th)\n",
+				__FUNCTION__, refcnt));
+				set_current_state(TASK_INTERRUPTIBLE);
+				schedule_timeout(100);
+				set_current_state(TASK_RUNNING);
+				refcnt++;
+			}
+			break;
+		
 		case NETDEV_UNREGISTER:
 			/* after calling list_del_rcu(&wdev->list) */
 			wl_dealloc_netinfo(wl, ndev);

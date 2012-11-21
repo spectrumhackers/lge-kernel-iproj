@@ -40,16 +40,6 @@ extern uint16_t battery_info_get(void);
 __attribute__((weak)) int usb_cable_info;
 #endif
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-#include <linux/earlysuspend.h>
-static struct {
-   struct early_suspend bl_lm3530_early_suspend;
-   short suspended;
-} lm3530_suspension;
-
-static void bl_early_suspend(struct early_suspend *h);
-static void bl_early_resume(struct early_suspend *h);
-#endif
 static struct i2c_client *lm3530_i2c_client;
 
 struct backlight_platform_data {
@@ -158,8 +148,6 @@ else if(level >MAX_LEVEL)
 
 void lm3530_backlight_on(int level)
 {
-	if (lm3530_suspension.suspended)
-		return;
 
 	if(backlight_status == BL_OFF){
 		lm3530_hw_reset();
@@ -298,25 +286,6 @@ static struct backlight_ops lm3530_bl_ops = {
 	.get_brightness = bl_get_intensity,
 };
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-static void bl_early_suspend(struct early_suspend *h)
-{
-	if (!lm3530_suspension.suspended) {
-		lm3530_backlight_off();
-		lm3530_suspension.suspended = 1;
-	}
-}
-
-static void bl_early_resume(struct early_suspend *h)
-{
-	if (lm3530_suspension.suspended) {
-		lm3530_suspension.suspended = 0;
-		lm3530_backlight_on(saved_main_lcd_level);
-	}
-}
-#endif
- 
-
 static int lm3530_probe(struct i2c_client *i2c_dev, const struct i2c_device_id *id)
 {
 	struct backlight_platform_data *pdata;
@@ -366,14 +335,6 @@ static int lm3530_probe(struct i2c_client *i2c_dev, const struct i2c_device_id *
 	err = device_create_file(&i2c_dev->dev, &dev_attr_lm3530_level);
 	err = device_create_file(&i2c_dev->dev, &dev_attr_lm3530_backlight_on_off);
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-        lm3530_suspension.bl_lm3530_early_suspend.level = EARLY_SUSPEND_LEVEL_DISABLE_FB;
-        lm3530_suspension.bl_lm3530_early_suspend.suspend = bl_early_suspend;
-        lm3530_suspension.bl_lm3530_early_suspend.resume = bl_early_resume;
-        register_early_suspend(&lm3530_suspension.bl_lm3530_early_suspend);
-	lm3530_suspension.suspended = 0;
-#endif
-
 	return 0;
 }
 
@@ -414,7 +375,7 @@ static int __init lcd_backlight_init(void)
 
 	return err;
 }
-
+ 
 module_init(lcd_backlight_init);
 
 MODULE_DESCRIPTION("LM3530 Backlight Control");

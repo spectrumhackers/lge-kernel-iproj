@@ -97,8 +97,8 @@ static irqreturn_t pwrkey_press_irq(int irq, void *_pwrkey)
   {
     pwrkey->pressed_first = true;
 
-	input_report_key(pwrkey->pwr, KEY_POWER, 1);
-	input_sync(pwrkey->pwr);
+    input_report_key(pwrkey->pwr, KEY_POWER, 1);
+	  input_sync(pwrkey->pwr);
 
 		hrtimer_start(&pwrkey->timer,
 				ktime_set(pdata->pwrkey_time_ms / 1000,
@@ -106,7 +106,7 @@ static irqreturn_t pwrkey_press_irq(int irq, void *_pwrkey)
 				HRTIMER_MODE_REL);
 
     spin_unlock_irqrestore(&pwrkey->lock, flags);
-	return IRQ_HANDLED;
+    return IRQ_HANDLED;
 	}
   /* [LGE_UPDATE_E  - PowerOff CHG] */
 }
@@ -151,8 +151,8 @@ static irqreturn_t pwrkey_release_irq(int irq, void *_pwrkey)
     {
 			input_report_key(pwrkey->pwr, KEY_POWER, 1);
 			input_sync(pwrkey->pwr);
-	input_report_key(pwrkey->pwr, KEY_POWER, 0);
-	input_sync(pwrkey->pwr);
+			input_report_key(pwrkey->pwr, KEY_POWER, 0);
+			input_sync(pwrkey->pwr);
 			spin_unlock_irqrestore(&pwrkey->lock, flags);
 			return IRQ_HANDLED;
 		}
@@ -165,7 +165,7 @@ static irqreturn_t pwrkey_release_irq(int irq, void *_pwrkey)
   long_key_pressed = false;
 	spin_unlock_irqrestore(&pwrkey->lock, flags);
   /* [LGE_UPDATE_E  - PowerOff CHG] */
-
+  
 	return IRQ_HANDLED;
 }
 

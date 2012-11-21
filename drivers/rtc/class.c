@@ -101,7 +101,7 @@ static int rtc_resume(struct device *dev)
 	new_rtc.tv_nsec = 0;
 
 	if (new_rtc.tv_sec < old_rtc.tv_sec) {
-			pr_debug("%s:  time travel!\n", dev_name(&rtc->dev));
+		pr_debug("%s:  time travel!\n", dev_name(&rtc->dev));
 		return 0;
 	}
 
@@ -119,7 +119,7 @@ static int rtc_resume(struct device *dev)
 			timespec_sub(new_system, old_system));
 
 	if (sleep_time.tv_sec >= 0)
-	timekeeping_inject_sleeptime(&sleep_time);
+		timekeeping_inject_sleeptime(&sleep_time);
 	return 0;
 }
 

@@ -1086,7 +1086,7 @@ void mmc_power_up(struct mmc_host *host)
 #ifdef CONFIG_MACH_LGE_I_BOARD
         mmc_delay(20);
 #else
-	mmc_delay(10);
+        mmc_delay(10);
 #endif	 
 
 
@@ -1102,7 +1102,7 @@ void mmc_power_up(struct mmc_host *host)
 #ifdef CONFIG_MACH_LGE_I_BOARD
         mmc_delay(20);
 #else
-	mmc_delay(10);
+        mmc_delay(10);
 #endif
 
 	mmc_host_clk_release(host);
@@ -1537,7 +1537,6 @@ int mmc_erase(struct mmc_card *card, unsigned int from, unsigned int nr,
 {
 	unsigned int rem, to = from + nr;
 
-#ifndef CONFIG_MACH_LGE_I_BOARD_SKT
 	if (!(card->host->caps & MMC_CAP_ERASE) ||
 	    !(card->csd.cmdclass & CCC_ERASE))
 		return -EOPNOTSUPP;
@@ -1588,9 +1587,6 @@ int mmc_erase(struct mmc_card *card, unsigned int from, unsigned int nr,
 	to -= 1;
 
 	return mmc_do_erase(card, from, to, arg);
-#else
-	return -EOPNOTSUPP;
-#endif
 }
 EXPORT_SYMBOL(mmc_erase);
 

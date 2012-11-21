@@ -3376,7 +3376,6 @@ static struct measure_sel measure_mux[] = {
 	{ TEST_MM_HS(0x1E), &hdmi_tv_clk.c },
 	{ TEST_MM_HS(0x1F), &mdp_tv_clk.c },
 	{ TEST_MM_HS(0x24), &smi_2x_axi_clk.c },
-
 	{ TEST_MM_HS2X(0x24), &smi_clk.c },
 	{ TEST_MM_HS2X(0x24), &smi_a_clk.c },
 
@@ -3611,7 +3610,7 @@ static struct clk_lookup msm_clocks_8x60[] = {
 #ifdef CONFIG_LGE_FELICA
 	CLK_LOOKUP("core_clk",		gsbi10_uart_clk.c, "msm_serial_hsl.3"),
 #else
-	CLK_LOOKUP("core_clk",		gsbi10_uart_clk.c,	NULL),
+	CLK_LOOKUP("core_clk",		gsbi10_uart_clk.c, NULL),
 #endif
 	CLK_LOOKUP("core_clk",		gsbi11_uart_clk.c,	NULL),
 	CLK_LOOKUP("core_clk",		gsbi12_uart_clk.c, "msm_serial_hsl.0"),
@@ -3643,7 +3642,7 @@ static struct clk_lookup msm_clocks_8x60[] = {
 #if defined (CONFIG_LGE_WIRELESS_CHARGER_MAX8971) || defined (CONFIG_LGE_WIRELESS_CHARGER_BQ24160)
 	CLK_LOOKUP("core_clk",		gsbi11_qup_clk.c,	"qup_i2c.12"),
 #else
-	CLK_LOOKUP("core_clk",		gsbi11_qup_clk.c,	NULL),
+        CLK_LOOKUP("core_clk",          gsbi11_qup_clk.c,       NULL),
 #endif
 	CLK_LOOKUP("gsbi_qup_clk",	gsbi12_qup_clk.c,	"msm_dsps"),
 	CLK_LOOKUP("core_clk",		gsbi12_qup_clk.c,	"qup_i2c.5"),
@@ -3736,10 +3735,10 @@ static struct clk_lookup msm_clocks_8x60[] = {
 #if CONFIG_LGE_CAMERA //jisun.shin@lge.com
 	CLK_LOOKUP("csi_clk",		csi1_clk.c, "msm_camera_mt9m114.0"),
 #else
-	CLK_LOOKUP("csi_clk",		csi0_clk.c,		"msm_csic.0"),
-	CLK_LOOKUP("csi_clk",		csi1_clk.c, "msm_camera_ov7692.0"),
-	CLK_LOOKUP("csi_clk",		csi1_clk.c, "msm_camera_ov9726.0"),
-	CLK_LOOKUP("csi_clk",		csi1_clk.c, "msm_csic.1"),
+        CLK_LOOKUP("csi_clk",           csi0_clk.c,             "msm_csic.0"),
+        CLK_LOOKUP("csi_clk",           csi1_clk.c, "msm_camera_ov7692.0"),
+        CLK_LOOKUP("csi_clk",           csi1_clk.c, "msm_camera_ov9726.0"),
+        CLK_LOOKUP("csi_clk",           csi1_clk.c, "msm_csic.1"),
 #endif
 	CLK_LOOKUP("csi_src_clk",	csi_src_clk.c,		NULL),
 	CLK_LOOKUP("csi_src_clk",	csi_src_clk.c,		"msm_csic.0"),
@@ -3784,8 +3783,8 @@ static struct clk_lookup msm_clocks_8x60[] = {
 #else
 	CLK_LOOKUP("csi_vfe_clk",	csi1_vfe_clk.c, "msm_camera_ov7692.0"),
 	CLK_LOOKUP("csi_vfe_clk",	csi1_vfe_clk.c, "msm_camera_ov9726.0"),
-	CLK_LOOKUP("csi_vfe_clk",	csi0_vfe_clk.c, "msm_csic.0"),
-	CLK_LOOKUP("csi_vfe_clk",	csi1_vfe_clk.c, "msm_csic.1"),
+        CLK_LOOKUP("csi_vfe_clk",       csi0_vfe_clk.c, "msm_csic.0"),
+        CLK_LOOKUP("csi_vfe_clk",       csi1_vfe_clk.c, "msm_csic.1"),
 #endif
 	CLK_LOOKUP("vfe_clk",		vfe_clk.c,		NULL),
 	CLK_LOOKUP("vfe_clk",		vfe_clk.c,		"msm_vfe.0"),
@@ -3802,10 +3801,10 @@ static struct clk_lookup msm_clocks_8x60[] = {
 #if CONFIG_LGE_CAMERA //jisun.shin@lge.com
 	CLK_LOOKUP("csi_pclk",		csi1_p_clk.c, "msm_camera_mt9m114.0"),
 #else
-	CLK_LOOKUP("csi_pclk",		csi0_p_clk.c,		"msm_csic.0"),
-	CLK_LOOKUP("csi_pclk",		csi1_p_clk.c, "msm_camera_ov7692.0"),
-	CLK_LOOKUP("csi_pclk",		csi1_p_clk.c, "msm_camera_ov9726.0"),
-	CLK_LOOKUP("csi_pclk",		csi1_p_clk.c,		"msm_csic.1"),
+        CLK_LOOKUP("csi_pclk",          csi0_p_clk.c,           "msm_csic.0"),
+        CLK_LOOKUP("csi_pclk",          csi1_p_clk.c, "msm_camera_ov7692.0"),
+        CLK_LOOKUP("csi_pclk",          csi1_p_clk.c, "msm_camera_ov9726.0"),
+        CLK_LOOKUP("csi_pclk",          csi1_p_clk.c,           "msm_csic.1"),
 #endif
 	CLK_LOOKUP("dsi_m_pclk",	dsi_m_p_clk.c,		NULL),
 	CLK_LOOKUP("dsi_s_pclk",	dsi_s_p_clk.c,		NULL),

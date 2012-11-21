@@ -2908,7 +2908,7 @@ static long msm_ioctl_config(struct file *filep, unsigned int cmd,
 		#else
 			rc = msm_flash_ctrl(pmsm->sync->sdata, &flash_info);
 		#endif
-
+		
 		break;
 	}
 

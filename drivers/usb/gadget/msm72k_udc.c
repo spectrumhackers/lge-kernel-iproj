@@ -2030,11 +2030,9 @@ static void usb_reset(struct usb_info *ui)
 	flush_endpoint(&ui->ep0out);
 	flush_endpoint(&ui->ep0in);
 
-#ifdef CONFIG_USB_G_LGE_ANDROID_FACTORY
     /* detect usb id */
     msleep(200);
     usb_id_detect(ui);
-#endif
 
 	/* enable interrupts */
 	writel(STS_URI | STS_SLI | STS_UI | STS_PCI, USB_USBINTR);

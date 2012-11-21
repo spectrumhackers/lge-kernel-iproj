@@ -267,7 +267,7 @@ void mdp4_hw_init(void)
 
 //lcd blackout workaround
 	if(dma_tx_timeout){
-	mdp4_sw_reset(0x17);
+		mdp4_sw_reset(0x17);
 		dma_tx_timeout = 0;
 	}		
 	//mdp4_sw_reset(0x17);

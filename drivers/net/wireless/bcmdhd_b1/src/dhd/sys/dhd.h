@@ -85,7 +85,7 @@ enum dhd_bus_state {
 #define DHD_SCAN_PASSIVE_TIME	130 /* ms: Embedded default Passive setting from DHD Driver */
 
 #ifndef POWERUP_MAX_RETRY
-#define POWERUP_MAX_RETRY	(3) /* how many times we retry to power up the chip */
+#define POWERUP_MAX_RETRY	(10) /* how many times we retry to power up the chip */
 #endif
 #ifndef POWERUP_WAIT_MS
 #define POWERUP_WAIT_MS		(2000) /* ms: time out in waiting wifi to come up */
@@ -453,7 +453,6 @@ extern int dhd_dev_get_pno_status(struct net_device *dev);
 #define DHD_BROADCAST_FILTER_NUM	1
 #define DHD_MULTICAST4_FILTER_NUM	2
 #define DHD_MULTICAST6_FILTER_NUM	3
-#define DHD_MDNS_FILTER_NUM            4
 extern int net_os_set_packet_filter(struct net_device *dev, int val);
 extern int net_os_rxfilter_add_remove(struct net_device *dev, int val, int num);
 
@@ -516,7 +515,7 @@ extern uint dhd_bus_status(dhd_pub_t *dhdp);
 extern int  dhd_bus_start(dhd_pub_t *dhdp);
 extern int dhd_bus_membytes(dhd_pub_t *dhdp, bool set, uint32 address, uint8 *data, uint size);
 extern void dhd_print_buf(void *pbuf, int len, int bytes_per_line);
-extern bool dhd_is_associated(dhd_pub_t *dhd, void *bss_buf, int *retval);
+extern bool dhd_is_associated(dhd_pub_t *dhd, void *bss_buf);
 
 #if defined(KEEP_ALIVE)
 extern int dhd_keep_alive_onoff(dhd_pub_t *dhd);

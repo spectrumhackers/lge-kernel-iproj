@@ -833,7 +833,7 @@ static int audio_mvs_release(struct inode *inode, struct file *file)
 	/* Free input and output memory. */
 	spin_lock_irqsave(&audio->dsp_lock, dsp_flags);
 	//mutex_lock(&audio->in_lock);
-
+	
 	list_for_each_safe(ptr, next, &audio->in_queue) {
 		buf_node = list_entry(ptr, struct audio_mvs_buf_node, list);
 		list_del(&buf_node->list);

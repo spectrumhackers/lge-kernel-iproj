@@ -35,6 +35,7 @@ enum msm_hardware_charger_event {
 //#ifdef CONFIG_LGE_PM_BATTERY_ALARM
 	CHG_BATT_REMOVE_EVENT,  /* [LGE_UPDAET : for battery remove] */
 //#endif
+
     CHG_BATT_REFRESH_EVENT,     /* [LGE_UPDATE: for Fuel Gauge BUG] */
 	CHG_BATT_NEEDS_RECHARGING,
 };

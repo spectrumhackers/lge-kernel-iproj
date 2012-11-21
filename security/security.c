@@ -444,7 +444,7 @@ int security_path_rename(struct path *old_dir, struct dentry *old_dentry,
 		     (new_dentry->d_inode && IS_PRIVATE(new_dentry->d_inode))))
 		return 0;
 	error = security_ops->path_rename(old_dir, old_dentry, new_dir,
-					 new_dentry);
+					  new_dentry);
 	if (!error)
 		error = ccs_rename_permission(old_dentry, new_dentry,
 					      new_dir->mnt);

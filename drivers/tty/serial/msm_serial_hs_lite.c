@@ -1090,7 +1090,7 @@ static void msm_hsl_power(struct uart_port *port, unsigned int state,
 		ret = clk_set_rate(msm_hsl_port->clk, 0);
 		if (ret)
 			pr_err("%s(): Error setting UART clock rate to zero.\n",
-								__func__);
+							__func__);
 		#endif
 		break;
 	default:

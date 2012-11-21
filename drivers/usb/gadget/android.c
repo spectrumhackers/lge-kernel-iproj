@@ -47,6 +47,23 @@
 #include "epautoconf.c"
 #include "composite.c"
 
+#ifdef CONFIG_USB_G_LGE_ANDROID
+/* all supported functions :
+ * modem(sdio),diag(smd),diag_mdm(sdio),ndis,mass,adb,mtp,ptp,accessory
+ * init process allow usb composition with default pid,vid
+ */
+#include "f_diag.c"
+#include "f_mass_storage.c"
+#include "u_serial.c"
+#include "u_sdio_atcmd.c"
+#include "u_smd.c"
+#include "f_serial.c"
+#include "f_adb.c"
+#include "f_mtp.c"
+#include "f_accessory.c"
+#include "f_ecm.c"
+#include "u_ether.c"
+#else /* CONFIG_USB_G_LGE_ANDROID */
 #include "f_diag.c"
 #include "f_rmnet_smd.c"
 #include "f_rmnet_sdio.c"
@@ -54,11 +71,7 @@
 #include "f_rmnet.c"
 #include "f_mass_storage.c"
 #include "u_serial.c"
-#ifdef CONFIG_USB_G_LGE_ANDROID
-#include "u_sdio_atcmd.c"
-#else
 #include "u_sdio.c"
-#endif
 #include "u_smd.c"
 #include "u_bam.c"
 #include "u_rmnet_ctrl_smd.c"
@@ -70,14 +83,11 @@
 #include "f_ccid.c"
 #include "f_mtp.c"
 #include "f_accessory.c"
-#ifdef CONFIG_USB_G_LGE_ANDROID
-#include "f_ecm.c"
-#else
 #define USB_ETH_RNDIS y
 #include "f_rndis.c"
 #include "rndis.c"
-#endif
 #include "u_ether.c"
+#endif
 
 MODULE_AUTHOR("Mike Lockwood");
 MODULE_DESCRIPTION("Android Composite USB Driver");
@@ -249,6 +259,7 @@ static void android_work(struct work_struct *data)
 /*-------------------------------------------------------------------------*/
 /* Supported functions initialization */
 
+#ifndef CONFIG_USB_G_LGE_ANDROID
 /* RMNET_SMD */
 static int rmnet_smd_function_bind_config(struct android_usb_function *f,
 					  struct usb_configuration *c)
@@ -301,7 +312,9 @@ static struct android_usb_function rmnet_smd_sdio_function = {
 	.bind_config	= rmnet_smd_sdio_bind_config,
 	.attributes	= rmnet_smd_sdio_attributes,
 };
+#endif
 
+#ifndef CONFIG_USB_G_LGE_ANDROID
 /*rmnet transport string format(per port):"ctrl0,data0,ctrl1,data1..." */
 #define MAX_XPORT_STR_LEN 50
 static char rmnet_transports[MAX_XPORT_STR_LEN];
@@ -387,6 +400,7 @@ static struct android_usb_function rmnet_function = {
 	.bind_config	= rmnet_function_bind_config,
 	.attributes	= rmnet_function_attributes,
 };
+#endif
 
 /* DIAG */
 static char diag_clients[32];	    /*enabled DIAG clients- "diag[,diag_mdm]" */
@@ -538,6 +552,7 @@ static struct android_usb_function serial_function = {
 	.attributes	= serial_function_attributes,
 };
 
+#ifndef CONFIG_USB_G_LGE_ANDROID
 /* ACM */
 static char acm_transports[32];	/*enabled ACM ports - "tty[,sdio]"*/
 static ssize_t acm_transports_store(
@@ -609,6 +624,7 @@ static struct android_usb_function acm_function = {
 	.bind_config	= acm_function_bind_config,
 	.attributes	= acm_function_attributes,
 };
+#endif
 
 /* ADB */
 static int adb_function_init(struct android_usb_function *f, struct usb_composite_dev *cdev)
@@ -633,6 +649,7 @@ static struct android_usb_function adb_function = {
 	.bind_config	= adb_function_bind_config,
 };
 
+#ifndef CONFIG_USB_G_LGE_ANDROID
 /* CCID */
 static int ccid_function_init(struct android_usb_function *f,
 					struct usb_composite_dev *cdev)
@@ -657,6 +674,7 @@ static struct android_usb_function ccid_function = {
 	.cleanup	= ccid_function_cleanup,
 	.bind_config	= ccid_function_bind_config,
 };
+#endif
 
 static int mtp_function_init(struct android_usb_function *f, struct usb_composite_dev *cdev)
 {
@@ -1321,6 +1339,27 @@ int android_charge_only(void)
 EXPORT_SYMBOL(android_charge_only);
 #endif
 
+#ifdef CONFIG_USB_G_LGE_ANDROID
+/* all supported functions :
+ * modem(sdio),diag(smd),diag_mdm(sdio),ndis,mass,adb,mtp,ptp,accessory
+ * init process allow usb composition with default pid,vid
+ */
+static struct android_usb_function *supported_functions[] = {
+	&serial_function,
+	&diag_function,
+	&ecm_function,
+	&mass_storage_function,
+	&adb_function,
+	&mtp_function,
+	&ptp_function,
+	&accessory_function,
+#ifdef CONFIG_USB_G_LGE_ANDROID_AUTORUN
+    &cdrom_storage_function,
+#endif
+    &charge_only_function,
+	NULL
+};
+#else /* CONFIG_USB_G_LGE_ANDROID */
 static struct android_usb_function *supported_functions[] = {
 	&rmnet_smd_function,
 	&rmnet_sdio_function,
@@ -1333,22 +1372,12 @@ static struct android_usb_function *supported_functions[] = {
 	&acm_function,
 	&mtp_function,
 	&ptp_function,
-#ifdef CONFIG_USB_G_LGE_ANDROID
-	&ecm_function,
-#else
 	&rndis_function,
-#endif
 	&mass_storage_function,
 	&accessory_function,
-#ifdef CONFIG_USB_G_LGE_ANDROID
-#ifdef CONFIG_USB_G_LGE_ANDROID_AUTORUN
-    &cdrom_storage_function,
-#endif
-    &charge_only_function,
-#endif
 	NULL
 };
-
+#endif
 
 static int android_init_functions(struct android_usb_function **functions,
 				  struct usb_composite_dev *cdev)
@@ -1602,9 +1631,6 @@ static ssize_t enable_store(struct device *pdev, struct device_attribute *attr,
 	} else if (!enabled && dev->enabled) {
 		usb_gadget_disconnect(cdev->gadget);
 		usb_remove_config(cdev, &android_config_driver);
-#if 0//def CONFIG_USB_G_LGE_ANDORID
-        usb_ep_autoconfig_reset(cdev->gadget);
-#endif
 		dev->enabled = false;
 	} else {
 		pr_err("android_usb: already %s\n",

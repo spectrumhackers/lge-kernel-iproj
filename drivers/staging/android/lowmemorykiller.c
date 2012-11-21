@@ -154,9 +154,9 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 	for (i = 0; i < array_size; i++) {
 #ifdef CONFIG_LGE_DEBUG
 		if (other_free < lowmem_minfree[i] &&
-		    other_file < lowmem_minfree[i]*3) {
+		    other_file < lowmem_minfree[i]*2) {
 		    lowmem_print(6, "lowmem_minfree[i] %d owmem_minfree[i]*3 %d, i %d\n",
-			             lowmem_minfree[i], lowmem_minfree[i]*3, i);        
+			             lowmem_minfree[i], lowmem_minfree[i]*2, i);        
 			min_adj = lowmem_adj[i];
 			break;
 		}
@@ -220,9 +220,11 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 		selected = p;
 		selected_tasksize = tasksize;
 		selected_oom_adj = oom_adj;
+
 		lowmem_print(2, "select %d (%s), adj %d, size %d, to kill\n",
 			     p->pid, p->comm, oom_adj, tasksize);
 	}
+
 	if (selected) {
 		lowmem_print(1, "send sigkill to %d (%s), adj %d, size %d\n",
 			     selected->pid, selected->comm,
@@ -234,6 +236,7 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 	}
 	lowmem_print(4, "lowmem_shrink %lu, %x, return %d\n",
 		     sc->nr_to_scan, sc->gfp_mask, rem);
+
 	read_unlock(&tasklist_lock);
 	return rem;
 }

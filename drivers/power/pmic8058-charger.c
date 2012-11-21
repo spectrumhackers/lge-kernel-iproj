@@ -983,8 +983,9 @@ static int pm8058_start_charging(struct msm_hardware_charger *hw_chg,
 	pm8058_chg_enable_irq(FASTCHG_IRQ);
 
 	ret = pm_chg_vmaxsel_set(chg_voltage);
-	if (ret)
-		goto out;
+	if (ret < 0){
+		return ret;
+	}
 
 	/* set vbat to  CC to CV threshold */
 #ifdef CONFIG_LGE_CHARGER_VOLTAGE_CURRENT_SCENARIO
@@ -993,8 +994,9 @@ static int pm8058_start_charging(struct msm_hardware_charger *hw_chg,
 	ret = pm_chg_vbatdet_set(AUTO_CHARGING_VBATDET);
 #endif
 
-	if (ret)
-		goto out;
+	if (ret < 0){
+		return ret;
+	}
 
 #ifdef CONFIG_LGE_CHARGER_VOLTAGE_CURRENT_SCENARIO
 	pm8058_chg.vbatdet = AUTO_CHARGING_VBATDET_CALC(lge_battery_info);
@@ -1036,8 +1038,7 @@ static int pm8058_start_charging(struct msm_hardware_charger *hw_chg,
 				      round_jiffies_relative(msecs_to_jiffies
 			     (AUTO_CHARGING_VBATDET_DEBOUNCE_TIME_MS)));
 
-out:
-	return ret;
+	return 0;
 }
 
 
@@ -1418,23 +1419,23 @@ void pm8058_chg_batt_remove_and_reset(void)
   int ret;
   int mv_reading;
 
+#ifdef CONFIG_LGE_CHARGER_TEMP_SCENARIO
+  /* kiwone.seo@lge.com 2011-05-26, we will always restart whenever battery is inserted or removed */
+  pr_err("===========================================================");
+  if(batt_read_adc(CHANNEL_ADC_BATT_THERM, &mv_reading) < 0)
+  {
+      pr_err("%s: arch_reset board rev = %d \n",__func__, lge_bd_rev);
+      pr_err("===========================================================");
+      arch_reset(0,NULL);
+  }
+#endif
+
   ret = pm_chg_get_rt_status(pm8058_chg.pmic_chg_irq[BATTCONNECT_IRQ]);
   if (ret) {
     msm_charger_notify_event(&usb_hw_chg, CHG_BATT_REMOVED);
   } 
   
   ret = pm_chg_batt_temp_disable(1); //need or not?
-
-#ifdef CONFIG_LGE_CHARGER_TEMP_SCENARIO
-  /* kiwone.seo@lge.com 2011-05-26, we will always restart whenever battery is inserted or removed */
-  pr_err("===========================================================");
-  if(batt_read_adc(CHANNEL_ADC_BATT_THERM, &mv_reading) < 0)
-  {
-	pr_err("%s: arch_reset board rev = %d \n",__func__, lge_bd_rev);
-	pr_err("===========================================================");
-	arch_reset(0,NULL);
-  }
-#endif
 }
 EXPORT_SYMBOL(pm8058_chg_batt_remove_and_reset);
 
@@ -1443,7 +1444,7 @@ static irqreturn_t pm8058_chg_battconnect_handler(int irq, void *dev_id)
 {
 #if 0
 	int ret;
-  //int mv_reading;
+  int mv_reading;
 
 	ret = pm_chg_get_rt_status(pm8058_chg.pmic_chg_irq[BATTCONNECT_IRQ]);
 	if (ret) {
@@ -1459,9 +1460,7 @@ static irqreturn_t pm8058_chg_battconnect_handler(int irq, void *dev_id)
 		pr_err("===========================================================");
 /* kiwone.seo@lge.com 20120419, when battery is removed with usb cable, the phone doesn't reset in ATNT board.
 that's why all of pmic status is currupted, so we comment out below*/
-#if 0  // MQS - NW Consistency ICS TD issue
   if(batt_read_adc(CHANNEL_ADC_BATT_THERM, &mv_reading) < 0)
-#endif
   {
 			pr_err("%s: arch_reset board rev = %d \n",__func__, lge_bd_rev);
 			pr_err("===========================================================");
@@ -2220,7 +2219,7 @@ sanity_out:
     else
     {
         printk(KERN_ERR "============== adc read fail  ===============\n");
-	return -EINVAL;
+	    return -EINVAL;
     }
 #endif
 
@@ -2273,7 +2272,7 @@ static int pm8058_get_battery_temperature_adc(void)
 
 	mv_reading = 0;
 	batt_read_adc(CHANNEL_ADC_BATT_THERM, &mv_reading);
-	pr_debug("%s: therm_raw is %d\n", __func__, mv_reading);
+	pr_err("%s: therm_raw is %d\n", __func__, mv_reading);
 	return mv_reading;
 }
 #endif
@@ -2379,16 +2378,17 @@ static int msm_battery_gauge_alarm_notify(struct notifier_block *nb,
 	case 1:
 #ifdef CONFIG_LGE_PM_BATTERY_ALARM
 		if (is_chg_plugged_in()) {
-		rc = pm8xxx_batt_alarm_disable(
-				PM8XXX_BATT_ALARM_UPPER_COMPARATOR);
-		if (!rc)
 			rc = pm8xxx_batt_alarm_disable(
-				PM8XXX_BATT_ALARM_LOWER_COMPARATOR);
-		if (rc)
-			dev_err(pm8058_chg.dev,
-				"%s: unable to set alarm state\n", __func__);
+				PM8XXX_BATT_ALARM_UPPER_COMPARATOR);
+			if (!rc)
+				rc = pm8xxx_batt_alarm_disable(
+					PM8XXX_BATT_ALARM_LOWER_COMPARATOR);
 
-		msm_charger_notify_event(NULL, CHG_BATT_NEEDS_RECHARGING);
+			if (rc)
+				dev_err(pm8058_chg.dev,
+					"%s: unable to set alarm state\n", __func__);
+
+				msm_charger_notify_event(NULL, CHG_BATT_NEEDS_RECHARGING);
 		}
 #else
 		rc = pm8xxx_batt_alarm_disable(

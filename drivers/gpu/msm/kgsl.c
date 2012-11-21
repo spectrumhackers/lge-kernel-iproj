@@ -514,8 +514,9 @@ void kgsl_late_resume_driver(struct early_suspend *h)
 					struct kgsl_device, display_off);
 	KGSL_PWR_WARN(device, "late resume start\n");
 	mutex_lock(&device->mutex);
-	kgsl_pwrctrl_wake(device);
+	//kgsl_pwrctrl_wake(device);
 	device->pwrctrl.restore_slumber = 0;
+	kgsl_pwrctrl_wake(device);
 	kgsl_pwrctrl_pwrlevel_change(device, KGSL_PWRLEVEL_TURBO);
 	mutex_unlock(&device->mutex);
 	kgsl_check_idle(device);
@@ -1661,8 +1662,8 @@ static long kgsl_ioctl_map_user_mem(struct kgsl_device_private *dev_priv,
 	 switch (entry->memtype) {
 		 case KGSL_MEM_ENTRY_PMEM:
 		 case KGSL_MEM_ENTRY_ASHMEM:
-	if (entry->priv_data)
-		fput(entry->priv_data);
+			 if (entry->priv_data)
+				 fput(entry->priv_data);
 			 break;
 		 case KGSL_MEM_ENTRY_ION:
 			 ion_unmap_dma(kgsl_ion_client, entry->priv_data);
@@ -2148,8 +2149,10 @@ void kgsl_unregister_device(struct kgsl_device *device)
 	kgsl_cffdump_close(device->id);
 	kgsl_pwrctrl_uninit_sysfs(device);
 
-	if (cpu_is_msm8x60())
-		wake_lock_destroy(&device->idle_wakelock);
+//	if (cpu_is_msm8x60())
+//		wake_lock_destroy(&device->idle_wakelock);
+	wake_lock_destroy(&device->idle_wakelock);
+	pm_qos_remove_request(&device->pm_qos_req_dma);
 
 	idr_destroy(&device->context_idr);
 
@@ -2240,10 +2243,13 @@ kgsl_register_device(struct kgsl_device *device)
 	if (ret != 0)
 		goto err_close_mmu;
 
-	if (cpu_is_msm8x60())
-		wake_lock_init(&device->idle_wakelock,
-					   WAKE_LOCK_IDLE, device->name);
-
+//	if (cpu_is_msm8x60())
+//		wake_lock_init(&device->idle_wakelock,
+//					   WAKE_LOCK_IDLE, device->name);
+	wake_lock_init(&device->idle_wakelock, WAKE_LOCK_IDLE, device->name);
+	pm_qos_add_request(&device->pm_qos_req_dma, PM_QOS_CPU_DMA_LATENCY,
+	                        PM_QOS_DEFAULT_VALUE);
+		
 	idr_init(&device->context_idr);
 
 	/* Initalize the snapshot engine */

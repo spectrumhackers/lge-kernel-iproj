@@ -156,7 +156,7 @@ static irqreturn_t hall_ic_dock_irq_handler(int irq, void *dev_id)
 	printk("### hall_ic_dock_irq_handler \n");
 
 	cancel_delayed_work(&dev->work);
-	queue_delayed_work(hallic_dock_wq, &dev->work, (HZ)/5);
+	queue_delayed_work(hallic_dock_wq, &dev->work, (HZ/2));
 	//queue_work(hallic_dock_wq, &dev->work);
 	return IRQ_HANDLED;
 }

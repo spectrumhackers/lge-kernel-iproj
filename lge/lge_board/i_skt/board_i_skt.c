@@ -1518,7 +1518,6 @@ unsigned char hdmi_is_primary;
 
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
 #define MSM_ION_HEAP_NUM	9
-//#define MSM_ION_HEAP_NUM	8
 #define MSM_HDMI_PRIM_ION_SF_SIZE MSM_HDMI_PRIM_PMEM_SF_SIZE
 static unsigned msm_ion_sf_size = MSM_ION_SF_SIZE;
 #else
@@ -3735,7 +3734,7 @@ static struct pm8xxx_keypad_platform_data i_skt_keypad_data = {
 };
 
 static struct pm8xxx_rtc_platform_data pm8058_rtc_pdata = {
-	.rtc_write_enable = true,
+	.rtc_write_enable = false,
 	.rtc_alarm_powerup = false,
 };
 

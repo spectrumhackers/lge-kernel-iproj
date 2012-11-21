@@ -392,7 +392,7 @@ static int subsystem_restart_thread(void *data)
 #endif
 			panic("subsys-restart: %s[%p]: Failed to shutdown %s!",
 				__func__, current, restart_list[i]->name);
-	}
+		}
 	}
 
 	_send_notification_to_order(restart_list, restart_list_count,
@@ -441,7 +441,7 @@ static int subsystem_restart_thread(void *data)
 #endif
 			panic("%s[%p]: Failed to powerup %s!", __func__,
 				current, restart_list[i]->name);
-	}
+		}
 	}
 
 	_send_notification_to_order(restart_list,

@@ -403,7 +403,7 @@ static void mdp4_scale_setup(struct mdp4_overlay_pipe *pipe)
 			MDP4_REV41_OR_LATER_UP_SCALING_MAX :
 			MDP4_REV40_UP_SCALING_MAX;
 		if (pipe->dst_h > pipe->src_h * upscale_max)
-			return;
+ 			return;
 
 		pipe->op_mode |= MDP4_OP_SCALEY_EN;
 
@@ -678,8 +678,8 @@ void mdp4_overlay_vg_setup(struct mdp4_overlay_pipe *pipe)
 			mask = 0xFFFCFFFF;
 		}
 		else {
-		mask = 0xFFFCF1FF;
-	}
+			mask = 0xFFFCF1FF;
+		}
 #endif
 	}
 	pipe->op_mode = (pipe->op_mode & mask) | (curr & ~mask);
@@ -1733,7 +1733,6 @@ static int mdp4_overlay_validate_downscale(struct mdp_overlay *req,
 	pr_debug("src_w %u, src_h %u, dst_w %u, dst_h %u\n",
 		req->src_rect.w, req->src_rect.h, req->dst_rect.w,
 		req->dst_rect.h);
-
 
 	panel_clk_khz = pclk_rate/1000;
 	mdp_clk_hz = mdp_perf_level2clk_rate(perf_level);

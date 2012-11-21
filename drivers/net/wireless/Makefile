@@ -67,3 +67,4 @@ obj-$(CONFIG_BCMDHD_B1)   += bcmdhd_b1/
 
 obj-$(CONFIG_LIBRA_SDIOIF)	+= libra/
 obj-$(CONFIG_WCNSS_CORE)	+= wcnss/
+
