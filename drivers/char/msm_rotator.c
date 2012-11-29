@@ -353,6 +353,8 @@ static int get_bpp(int format)
 		return 1;
 
 	case MDP_RGB_888:
+	case MDP_YCBCR_H1V1:
+	case MDP_YCRCB_H1V1:
 		return 3;
 
 	case MDP_YCRYCB_H2V1:
@@ -399,11 +401,14 @@ static int msm_rotator_get_plane_sizes(uint32_t format,	uint32_t w, uint32_t h,
 	case MDP_RGB_565:
 	case MDP_BGR_565:
 	case MDP_YCRYCB_H2V1:
+	case MDP_YCBCR_H1V1:
+	case MDP_YCRCB_H1V1:
 		p->num_planes = 1;
 		p->plane_size[0] = w * h * get_bpp(format);
 		break;
 	case MDP_Y_CRCB_H2V1:
 	case MDP_Y_CBCR_H2V1:
+	case MDP_Y_CRCB_H1V2:
 		p->num_planes = 2;
 		p->plane_size[0] = w * h;
 		p->plane_size[1] = w * h;
@@ -634,9 +639,12 @@ static int msm_rotator_ycrycb(struct msm_rotator_img_info *info,
 	int bpp;
 	uint32_t dst_format;
 
-	if (info->src.format == MDP_YCRYCB_H2V1)
-		dst_format = MDP_Y_CRCB_H2V1;
-	else
+	if (info->src.format == MDP_YCRYCB_H2V1) {
+		if (info->rotations & MDP_ROT_90)
+			dst_format = MDP_Y_CRCB_H1V2;
+		else
+			dst_format = MDP_Y_CRCB_H2V1;
+	} else
 		return -EINVAL;
 
 	if (info->dst.format != dst_format)
@@ -747,6 +755,8 @@ static int msm_rotator_rgb_types(struct msm_rotator_img_info *info,
 			break;
 
 		case MDP_RGB_888:
+		case MDP_YCBCR_H1V1:
+		case MDP_YCRCB_H1V1:
 			iowrite32(GET_PACK_PATTERN(0, CLR_R, CLR_G, CLR_B, 8),
 				  MSM_ROTATOR_SRC_UNPACK_PATTERN1);
 			iowrite32(GET_PACK_PATTERN(0, CLR_R, CLR_G, CLR_B, 8),
@@ -1090,6 +1100,8 @@ static int msm_rotator_do_rotate(unsigned long arg)
 	case MDP_XRGB_8888:
 	case MDP_BGRA_8888:
 	case MDP_RGBX_8888:
+	case MDP_YCBCR_H1V1:
+	case MDP_YCRCB_H1V1:
 		rc = msm_rotator_rgb_types(msm_rotator_dev->img_info[s],
 					   in_paddr, out_paddr,
 					   use_imem,
@@ -1254,10 +1266,15 @@ static int msm_rotator_start(unsigned long arg,
 	case MDP_Y_CRCB_H2V2:
 	case MDP_Y_CBCR_H2V1:
 	case MDP_Y_CRCB_H2V1:
+	case MDP_YCBCR_H1V1:
+	case MDP_YCRCB_H1V1:
 		info.dst.format = info.src.format;
 		break;
 	case MDP_YCRYCB_H2V1:
-		info.dst.format = MDP_Y_CRCB_H2V1;
+		if (info.rotations & MDP_ROT_90)
+			info.dst.format = MDP_Y_CRCB_H1V2;
+		else
+			info.dst.format = MDP_Y_CRCB_H2V1;
 		break;
 	case MDP_Y_CB_CR_H2V2:
 	case MDP_Y_CBCR_H2V2_TILE:

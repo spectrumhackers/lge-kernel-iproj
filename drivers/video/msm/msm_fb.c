@@ -259,28 +259,6 @@ int msm_fb_detect_client(const char *name)
 	return ret;
 }
 
-#ifdef CONFIG_FB_MSM_VSYNC_SYSFS
-int msm_fb_notify_vsync(struct msm_fb_data_type *mfd, ktime_t vsync_time)
-{
-	if (mfd) {
-		mfd->vsync_time = vsync_time;
-		sysfs_notify(&mfd->fbi->dev->kobj, NULL, "vsync_time");
-		return 0;
-	}
-	return -1;
-}
-
-static ssize_t msm_fb_vsync_time(struct device *dev,
-				  struct device_attribute *attr, char *buf)
-{
-	struct fb_info *fbi = dev_get_drvdata(dev);
-	struct msm_fb_data_type *mfd = (struct msm_fb_data_type *)fbi->par;
-	return snprintf(buf, PAGE_SIZE, "%llu", ktime_to_ns(mfd->vsync_time));
-}
-
-static DEVICE_ATTR(vsync_time, S_IRUGO, msm_fb_vsync_time, NULL);
-#endif
-
 static ssize_t msm_fb_msm_fb_type(struct device *dev,
 				  struct device_attribute *attr, char *buf)
 {
@@ -335,9 +313,6 @@ static ssize_t msm_fb_msm_fb_type(struct device *dev,
 static DEVICE_ATTR(msm_fb_type, S_IRUGO, msm_fb_msm_fb_type, NULL);
 static struct attribute *msm_fb_attrs[] = {
 	&dev_attr_msm_fb_type.attr,
-#ifdef CONFIG_FB_MSM_VSYNC_SYSFS
-	&dev_attr_vsync_time.attr,
-#endif
 	NULL,
 };
 static struct attribute_group msm_fb_attr_group = {
@@ -353,7 +328,7 @@ static int msm_fb_create_sysfs(struct platform_device *pdev)
 	if (rc)
 		MSM_FB_ERR("%s: sysfs group creation failed, rc=%d\n", __func__,
 			rc);
-    return rc;
+	return rc;
 }
 static void msm_fb_remove_sysfs(struct platform_device *pdev)
 {
@@ -2922,6 +2897,19 @@ static int msmfb_overlay_play_wait(struct fb_info *info, unsigned long *argp)
 	return ret;
 }
 
+static int msmfb_overlay_commit(struct fb_info *info, unsigned long *argp)
+{
+	int ret, ndx;
+
+	ret = copy_from_user(&ndx, argp, sizeof(ndx));
+	if (ret) {
+		pr_err("%s: ioctl failed\n", __func__);
+		return ret;
+	}
+
+	return mdp4_overlay_commit(info, ndx);
+}
+
 static int msmfb_overlay_play(struct fb_info *info, unsigned long *argp)
 {
 	int	ret;
@@ -3327,49 +3315,36 @@ static int msm_fb_ioctl(struct fb_info *info, unsigned int cmd,
 	switch (cmd) {
 #ifdef CONFIG_FB_MSM_OVERLAY
 	case MSMFB_OVERLAY_GET:
-		down(&msm_fb_ioctl_ppp_sem);
 		ret = msmfb_overlay_get(info, argp);
-		up(&msm_fb_ioctl_ppp_sem);
 		break;
 	case MSMFB_OVERLAY_SET:
-		down(&msm_fb_ioctl_ppp_sem);
 		ret = msmfb_overlay_set(info, argp);
-		up(&msm_fb_ioctl_ppp_sem);
 		break;
 	case MSMFB_OVERLAY_UNSET:
-		down(&msm_fb_ioctl_ppp_sem);
 		ret = msmfb_overlay_unset(info, argp);
+		break;
+	case MSMFB_OVERLAY_COMMIT:
+		down(&msm_fb_ioctl_ppp_sem);
+		ret = msmfb_overlay_commit(info, argp);
 		up(&msm_fb_ioctl_ppp_sem);
 		break;
 	case MSMFB_OVERLAY_PLAY:
-		down(&msm_fb_ioctl_ppp_sem);
 		ret = msmfb_overlay_play(info, argp);
-		up(&msm_fb_ioctl_ppp_sem);
 		break;
 	case MSMFB_OVERLAY_PLAY_ENABLE:
-		down(&msm_fb_ioctl_ppp_sem);
 		ret = msmfb_overlay_play_enable(info, argp);
-		up(&msm_fb_ioctl_ppp_sem);
 		break;
 	case MSMFB_OVERLAY_PLAY_WAIT:
-		down(&msm_fb_ioctl_ppp_sem);
 		ret = msmfb_overlay_play_wait(info, argp);
-		up(&msm_fb_ioctl_ppp_sem);
 		break;
 	case MSMFB_OVERLAY_BLT:
-		down(&msm_fb_ioctl_ppp_sem);
 		ret = msmfb_overlay_blt(info, argp);
-		up(&msm_fb_ioctl_ppp_sem);
 		break;
 	case MSMFB_OVERLAY_3D:
-		down(&msm_fb_ioctl_ppp_sem);
 		ret = msmfb_overlay_3d_sbys(info, argp);
-		up(&msm_fb_ioctl_ppp_sem);
 		break;
 	case MSMFB_MIXER_INFO:
-		down(&msm_fb_ioctl_ppp_sem);
 		ret = msmfb_mixer_info(info, argp);
-		up(&msm_fb_ioctl_ppp_sem);
 		break;
 	case MSMFB_WRITEBACK_INIT:
 		ret = msmfb_overlay_ioctl_writeback_init(info);

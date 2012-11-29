@@ -129,11 +129,10 @@ static int mipi_dsi_off(struct platform_device *pdev)
 	else
 		up(&mfd->dma->mutex);
 
-	pr_debug("%s-:\n", __func__);
-
 	return ret;
 }
 
+extern struct mdp4_overlay_perf perf_current;
 static int mipi_dsi_on(struct platform_device *pdev)
 {
 	int ret = 0;
@@ -311,6 +310,8 @@ static int mipi_dsi_on(struct platform_device *pdev)
 
 #ifdef CONFIG_MSM_BUS_SCALING
 	mdp_bus_scale_update_request(2);
+	perf_current.mdp_bw = OVERLAY_PERF_LEVEL4;
+	perf_current.mdp_clk_rate = 0;
 #endif
 
 	mdp4_overlay_dsi_state_set(ST_DSI_RESUME);
@@ -319,8 +320,6 @@ static int mipi_dsi_on(struct platform_device *pdev)
 		mutex_unlock(&mfd->dma->ov_mutex);
 	else
 		up(&mfd->dma->mutex);
-
-	pr_debug("%s-:\n", __func__);
 
 	return ret;
 }
