@@ -1,0 +1,16 @@
+#!/bin/bash
+
+cpus=$(grep "^processor" /proc/cpuinfo | wc -l)
+
+ARCH=arm
+CROSS_COMPILE="/usr/local/arm-2009q3/bin/arm-none-eabi-"
+
+CCACHE_BINARY=$(which ccache)
+if [ -s "$CCACHE_BINARY" ]; then
+	CROSS_COMPILE="ccache $CROSS_COMPILE"
+fi
+
+export ARCH
+export CROSS_COMPILE
+
+time make -j${cpus} $@
