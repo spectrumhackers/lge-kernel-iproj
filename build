@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 cpus=$(grep "^processor" /proc/cpuinfo | wc -l)
 
